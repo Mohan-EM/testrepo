@@ -6,8 +6,11 @@
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9b9e4913-dfed-4ece-ae35-16bdea31a3e1" >
-		<http:listener-connection host="0.0.0.0" port="8081" />
+		<http:listener-connection host="0.0.0.0" port="8082" />
 	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="6012769d-1910-4206-8e50-18fa48129e48" basePath="/v2" >
+		<http:request-connection protocol="HTTPS" host="jobs-api14.p.rapidapi.com" port="443" />
+	</http:request-config>
 	<flow name="testFlow" doc:id="9c43bb49-4f21-47eb-9943-46e98bd51387" >
 		<http:listener doc:name="Listener" doc:id="665319c2-eca7-411b-9d06-9ca0fb739962" path="test" config-ref="HTTP_Listener_config"/>
 		<ee:transform doc:name="Transform Message" doc:id="4fd86095-3238-44e1-aa0c-11562397961f" >
@@ -20,5 +23,31 @@ output application/json
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="8253e16c-11f9-45ff-a355-3c83bfcfa758" message="#[payload]"/>
 		<set-payload value='#["test123"]' doc:name="Set Payload" doc:id="da32f357-83b1-42b0-b1d4-8e74047e4b86" />
+	</flow>
+	<flow name="job-alert-to-whatsappFlow" doc:id="6a41b0e1-3b95-4213-8062-d66526e6d9da" >
+		<http:listener doc:name="Listener" doc:id="523d3b5c-cea6-418d-b544-c0d117d79905" config-ref="HTTP_Listener_config" path="test1" />
+		<http:request method="GET" doc:name="Request" doc:id="e9e6bbc3-c7b7-45cd-a211-bdbd49f62ef1" config-ref="HTTP_Request_configuration" path="/bing/search">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"x-rapidapi-key" : "4ff042f477mshd35d1071bb7af81p15a906jsn0024a8345dfb",
+	
+	
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+  {
+  "location": attributes.queryParams.'location',
+  "query": attributes.queryParams.'query'
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="e6e9c8f9-8fa1-4470-93cd-e25965f39acb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 </mule>
